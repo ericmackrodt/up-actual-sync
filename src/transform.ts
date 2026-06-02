@@ -1,4 +1,4 @@
-import type { RedbarkTransaction } from './types.js'
+import type { UpTransaction } from './types.js'
 
 export interface ActualTransaction {
   date: string
@@ -11,50 +11,35 @@ export interface ActualTransaction {
 }
 
 /**
- * Convert a dollar amount string to integer cents.
- * "12.50" → 1250, "0.99" → 99, "1000" → 100000
- */
-export function amountToInteger(amount: string): number {
-  return Math.round(parseFloat(amount) * 100)
-}
-
-/**
- * Transform a Redbark transaction into Actual Budget's import format.
+ * Transform an Up transaction into Actual Budget's import format.
  *
- * - Amount: converted to integer cents. Debit = negative, credit = positive.
- * - imported_id: prefixed with "redbark:" to avoid collision with other importers.
- * - payee_name: uses merchantName if available, falls back to description.
- * - cleared: true for posted transactions (we only import posted).
+ * - Amount: valueInBaseUnits is already signed integer cents (negative = outflow, positive = inflow).
+ * - imported_id: prefixed with "up:" to avoid collision with other importers.
+ * - payee_name: uses rawText (raw terminal string) when available, falls back to description.
+ * - date: always uses createdAt (the date the transaction occurred).
+ * - cleared: true for SETTLED transactions, false for HELD (pending).
  */
-export function toActualTransaction(
-  txn: RedbarkTransaction
-): ActualTransaction {
-  // The amount from Redbark is already signed (negative = outflow, positive = inflow).
-  // Actual Budget uses the same convention (negative = payment, positive = deposit).
-  const signedAmount = amountToInteger(txn.amount)
+export function toActualTransaction(txn: UpTransaction): ActualTransaction {
+  // valueInBaseUnits is already signed integer cents (negative = debit/outflow)
+  const amount = txn.attributes.amount.valueInBaseUnits
 
-  const notes = [txn.category, txn.merchantCategoryCode]
-    .filter(Boolean)
-    .join(' | ')
+  const date = txn.attributes.createdAt.split('T')[0]!
 
   return {
-    date: txn.date,
-    amount: signedAmount,
-    payee_name: txn.merchantName || txn.description,
-    imported_payee: txn.description,
-    imported_id: `redbark:${txn.id}`,
-    notes: notes || undefined,
-    cleared: txn.status === 'posted',
+    date,
+    amount,
+    payee_name: txn.attributes.rawText ?? txn.attributes.description,
+    imported_payee: txn.attributes.rawText ?? txn.attributes.description,
+    imported_id: `up:${txn.id}`,
+    notes: txn.attributes.message || undefined,
+    cleared: txn.attributes.status === 'SETTLED',
   }
 }
 
 /**
- * Transform a batch of Redbark transactions, filtering to posted only.
+ * Transform a batch of Up transactions into Actual Budget's import format.
+ * Includes both HELD (pending) and SETTLED transactions.
  */
-export function transformTransactions(
-  transactions: RedbarkTransaction[]
-): ActualTransaction[] {
-  return transactions
-    .filter((txn) => txn.status === 'posted')
-    .map(toActualTransaction)
+export function transformTransactions(transactions: UpTransaction[]): ActualTransaction[] {
+  return transactions.map(toActualTransaction)
 }

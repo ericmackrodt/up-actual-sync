@@ -5,23 +5,23 @@ describe('parseAccountMapping', () => {
   it('parses a single mapping', () => {
     const result = parseAccountMapping('abc:xyz')
     expect(result).toEqual([
-      { redbarkAccountId: 'abc', actualAccountId: 'xyz' },
+      { upAccountId: 'abc', actualAccountId: 'xyz' },
     ])
   })
 
   it('parses multiple mappings', () => {
     const result = parseAccountMapping('abc:xyz,def:uvw')
     expect(result).toEqual([
-      { redbarkAccountId: 'abc', actualAccountId: 'xyz' },
-      { redbarkAccountId: 'def', actualAccountId: 'uvw' },
+      { upAccountId: 'abc', actualAccountId: 'xyz' },
+      { upAccountId: 'def', actualAccountId: 'uvw' },
     ])
   })
 
   it('trims whitespace', () => {
     const result = parseAccountMapping(' abc : xyz , def : uvw ')
     expect(result).toEqual([
-      { redbarkAccountId: 'abc', actualAccountId: 'xyz' },
-      { redbarkAccountId: 'def', actualAccountId: 'uvw' },
+      { upAccountId: 'abc', actualAccountId: 'xyz' },
+      { upAccountId: 'def', actualAccountId: 'uvw' },
     ])
   })
 
@@ -36,7 +36,7 @@ describe('parseAccountMapping', () => {
 
 describe('loadConfig', () => {
   const validEnv = {
-    REDBARK_API_KEY: 'rbk_live_test123',
+    UP_API_KEY: 'up:yeah:test123',
     ACTUAL_SERVER_URL: 'http://localhost:5006',
     ACTUAL_PASSWORD: 'testpass',
     ACTUAL_BUDGET_ID: 'budget-123',
@@ -45,7 +45,7 @@ describe('loadConfig', () => {
 
   it('loads valid config', () => {
     const config = loadConfig(validEnv)
-    expect(config.redbarkApiKey).toBe('rbk_live_test123')
+    expect(config.upApiKey).toBe('up:yeah:test123')
     expect(config.actualServerUrl).toBe('http://localhost:5006')
     expect(config.syncDays).toBe(30)
     expect(config.dryRun).toBe(false)
@@ -54,7 +54,6 @@ describe('loadConfig', () => {
 
   it('applies defaults', () => {
     const config = loadConfig(validEnv)
-    expect(config.redbarkApiUrl).toBe('https://api.redbark.co')
     expect(config.actualDataDir).toBe('./data')
     expect(config.syncDays).toBe(30)
   })
@@ -76,7 +75,7 @@ describe('loadConfig', () => {
   })
 
   it('throws on missing API key', () => {
-    const { REDBARK_API_KEY, ...rest } = validEnv
+    const { UP_API_KEY, ...rest } = validEnv
     expect(() => loadConfig(rest)).toThrow(ConfigError)
   })
 })

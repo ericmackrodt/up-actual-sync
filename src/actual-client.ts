@@ -196,7 +196,7 @@ async function loadActualApi(
 
       if (matchingPath) {
         try {
-          return require(matchingPath) as typeof import('@actual-app/api')
+          return require(require('node:path').resolve(matchingPath)) as typeof import('@actual-app/api')
         } catch (error) {
           // Server newer than bundled → bundled cannot open the DB without
           // hitting @actual-app/api's out-of-sync-migrations guard. Surface

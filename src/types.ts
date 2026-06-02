@@ -1,68 +1,50 @@
-export interface RedbarkConnection {
-  id: string
-  provider: string
-  category: string
-  institutionId: string
-  institutionName: string
-  institutionLogo: string | null
-  status: string
-  lastRefreshedAt: string | null
-  createdAt: string
+export interface UpMoneyObject {
+  currencyCode: string
+  value: string
+  valueInBaseUnits: number
 }
 
-export interface RedbarkAccount {
+export interface UpAccount {
+  type: 'accounts'
   id: string
-  connectionId: string
-  provider: string | null
-  name: string
-  type: string
-  institutionName: string | null
-  accountNumber: string | null
-  currency: string
+  attributes: {
+    displayName: string
+    accountType: 'SAVER' | 'TRANSACTIONAL' | 'HOME_LOAN'
+    ownershipType: 'INDIVIDUAL' | 'JOINT'
+    balance: UpMoneyObject
+    createdAt: string
+  }
 }
 
-export interface RedbarkTransaction {
+export interface UpTransaction {
+  type: 'transactions'
   id: string
-  accountId: string
-  accountName: string
-  status: string
-  date: string
-  description: string
-  amount: string
-  direction: 'credit' | 'debit'
-  category?: string
-  merchantName?: string
-  merchantCategoryCode?: string
-}
-
-export interface RedbarkCategory {
-  key: string
-  label: string
+  attributes: {
+    status: 'HELD' | 'SETTLED'
+    rawText: string | null
+    description: string
+    message: string | null
+    amount: UpMoneyObject
+    foreignAmount: UpMoneyObject | null
+    settledAt: string | null
+    createdAt: string
+  }
+  relationships: {
+    account: { data: { type: string; id: string } }
+  }
 }
 
 export interface AccountMapping {
-  redbarkAccountId: string
+  upAccountId: string
   actualAccountId: string
 }
 
 export interface SyncResult {
-  redbarkAccountId: string
+  upAccountId: string
   actualAccountId: string
   accountName: string
   fetched: number
   added: number
   updated: number
   errors: number
-}
-
-export interface PaginationInfo {
-  total: number
-  limit: number
-  offset: number
-  hasMore: boolean
-}
-
-export interface PaginatedResponse<T> {
-  data: T[]
-  pagination: PaginationInfo
 }
